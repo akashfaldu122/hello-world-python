@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-app-deployment
+spec:
+  replicas: 2  # Number of pods
+  selector:
+    matchLabels:
+      app: springboot-app
+  template:
+    metadata:
+      labels:
+        app: springboot-app
+    spec:
+      tolerations:
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+      containers:
+      - name: springboot-container
+        image: akashconreg.azurecr.io/akash:latest  # Your ACR image
+        ports:
+        - containerPort: 8080  # Default Spring Boot port
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"  # Set environment variables if needed
+      imagePullSecrets:
+      - name: acr-secret  # Kubernetes secret for ACR authentication
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springboot-app-service
+spec:
+  type: LoadBalancer  # Expose via LoadBalancer or use NodePort for local testing
+  selector:
+    app: springboot-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080  # Match Spring Boot container port
